@@ -4,7 +4,6 @@ import {
   ToolEntry,
   ToolRecommendation,
   RecommendationType,
-  UseCase,
 } from "./types";
 import { TOOL_MAP, getPlanForTool } from "./tools";
 import { nanoid } from "./utils";
@@ -17,7 +16,7 @@ function evaluateTool(entry: ToolEntry, formData: AuditFormData): ToolRecommenda
   const tool = TOOL_MAP[entry.toolId];
   const currentPlan = getPlanForTool(entry.toolId, entry.plan);
   const { seats, monthlySpend, toolId } = entry;
-  const { teamSize, useCase } = formData;
+  const { useCase } = formData;
 
   const toolName = tool.name;
   const currentPlanLabel = currentPlan?.label ?? entry.plan;
@@ -46,7 +45,6 @@ function evaluateTool(entry: ToolEntry, formData: AuditFormData): ToolRecommenda
   // ── Cursor ──────────────────────────────────────────────────────────────
   if (toolId === "cursor") {
     const proPricePerSeat = 20;
-    const businessPricePerSeat = 40;
 
     if (entry.plan === "business" && seats <= 3) {
       const downgradeSpend = seats * proPricePerSeat;
