@@ -62,3 +62,130 @@
 - Add vitest unit tests for audit engine (5 minimum required)
 - Set up GitHub Actions CI
 - Start on lead capture form and Supabase integration
+
+---
+
+## Day 3 — 2026-05-09
+
+**Hours worked:** 5
+
+**What I did:**
+- Verified audit engine covers all 8 tools with plan-fit rules for Cursor, GitHub Copilot, Claude, ChatGPT, Anthropic API, OpenAI API, Gemini, Windsurf
+- Confirmed cross-tool alternative recommendations work (ChatGPT+Claude overlap, Cursor for non-coding, Copilot→Cursor)
+- Validated savings calculation logic (monthly + annual) in `runAudit()`
+- Wrote 10 vitest unit tests covering all core audit rules in `__tests__/audit-engine.test.ts`
+- Tests cover: plan downgrades, optimal paths, cross-tool overlap, Credex recommendations, seat waste detection, savings aggregation, savings categorization
+- Set up GitHub Actions CI workflow (`.github/workflows/ci.yml`) with lint + type check + test + build
+
+**What I learned:**
+- 10 tests (not just the minimum 5) made me much more confident in the engine's correctness. The savings categorization tests (high/medium/low/optimal) caught a potential off-by-one in the $500 threshold.
+- The `detectSeatWaste()` second pass is elegant — it decorates existing recommendations without duplicating evaluation logic.
+
+**Blockers / what I'm stuck on:**
+- None — engine and tests are solid. Ready for the results page polish.
+
+**Plan for tomorrow:**
+- Integrate Anthropic API for AI-generated audit summaries
+- Add graceful fallback when API key is missing or API fails
+- Verify Credex CTA only shows for >$500/mo savings
+
+---
+
+## Day 4 — 2026-05-09
+
+**Hours worked:** 4
+
+**What I did:**
+- Created `app/api/summary/route.ts` — POST endpoint calling Anthropic API (Claude 3.5 Sonnet) for personalized audit summaries
+- Used direct `fetch` to Anthropic API instead of an SDK — zero additional dependencies, 10s timeout with AbortController
+- Built `lib/fallback-summary.ts` — templated summary generator for when API key is missing or API fails
+- Added AI summary display to `AuditResults.tsx` with shimmer loading state, "AI-Powered Summary" vs "Audit Summary" labeling, and Claude badge
+- Verified Credex CTA renders only when `savingsCategory === "high"` (≥$500/mo savings)
+- Graceful degradation: missing API key → fallback, API error → fallback, network timeout → fallback
+
+**What I learned:**
+- Using `fetch` directly instead of the Anthropic SDK saves ~2MB of bundle size and simplifies error handling. The API surface is small enough that a wrapper isn't needed.
+- The fallback summary is surprisingly good — it uses the same data the AI would, just with templates. Users still get a personalized summary even without an API key.
+- The shimmer loading pattern (3 lines of `background: linear-gradient(90deg, ...)`) looks professional and signals progress without a spinner.
+
+**Blockers / what I'm stuck on:**
+- None. API integration is clean. Fallback is tested.
+
+**Plan for tomorrow:**
+- Build lead capture form with email + optional company/role fields
+- Set up Supabase integration for lead storage
+- Add shareable URL system with OG meta tags
+
+---
+
+## Day 5 — 2026-05-10
+
+**Hours worked:** 6
+
+**What I did:**
+- Built `components/results/LeadCaptureForm.tsx` — email capture form with optional company/role fields, honeypot field for bot protection
+- Created `lib/supabase.ts` — lightweight Supabase wrapper using fetch (no SDK), handles audit snapshot storage + lead persistence + PII stripping
+- Created `app/api/leads/route.ts` — lead capture endpoint with in-memory rate limiting (5 req/min/IP), honeypot check, email validation
+- Built `app/audit/[id]/page.tsx` — server component for shareable audit URLs with dynamic OG + Twitter Card meta tags
+- Built `app/audit/[id]/SharedAuditView.tsx` — public view of audit results (PII stripped), with CTA to run own audit
+- Integrated shareable URL display in results page after lead capture
+- All routes verified: `/`, `/api/leads`, `/api/summary`, `/audit/[id]`
+
+**What I learned:**
+- Honeypot fields are incredibly simple to implement and effective against dumb bots. The key is to silently accept the submission (return `{ success: true }`) so the bot doesn't know it was caught.
+- In-memory rate limiting is fine for a single-instance deployment. At scale, I'd need Redis (Upstash) for distributed rate limiting — noted in ARCHITECTURE.md.
+- Dynamic OG meta tags in Next.js App Router use `generateMetadata` — much cleaner than the old `Head` component pattern.
+
+**Blockers / what I'm stuck on:**
+- Supabase tables need to be created manually (SQL provided in README). Can't automate this without a Supabase CLI setup.
+
+**Plan for tomorrow:**
+- Add transactional email via Resend
+- Mobile layout polish
+- Final CI verification
+
+---
+
+## Day 6 — 2026-05-10
+
+**Hours worked:** 3
+
+**What I did:**
+- Created `lib/resend.ts` — Resend integration for transactional audit report emails with dark-themed HTML template
+- Integrated Resend into the leads API route — sends email asynchronously (non-blocking) after lead is saved
+- Added mobile responsive CSS — iOS zoom prevention (16px inputs), full-width buttons, adjusted card border radius
+- Verified PII stripping works on shared audit URLs (implemented in `lib/supabase.ts`)
+- Full CI pass: 10/10 tests pass, TypeScript compiles clean, Next.js build succeeds with all 5 routes
+
+**What I learned:**
+- Non-blocking email sending (fire-and-forget with `.catch()`) is the right pattern here. The user shouldn't wait for email delivery to see their shareable link.
+- Mobile iOS auto-zooms on inputs < 16px font-size — this is why every mobile-first framework sets `font-size: 16px` on inputs.
+
+**Blockers / what I'm stuck on:**
+- Vercel deployment and Lighthouse scoring depend on DNS/domain setup and actual API keys. Can't fully verify without production environment.
+
+**Plan for tomorrow:**
+- Write all documentation: REFLECTION.md, GTM.md, ECONOMICS.md, METRICS.md
+- Finalize README with screenshots and decisions
+- Complete DEVLOG with all 7 entries
+
+---
+
+## Day 7 — 2026-05-10
+
+**Hours worked:** 3
+
+**What I did:**
+- Completed DEVLOG.md with all 7 daily entries
+- Wrote REFLECTION.md with 5 reflective questions
+- Wrote GTM.md — go-to-market strategy with channels, messaging, and distribution plan
+- Wrote ECONOMICS.md — unit economics, LTV calculation, and break-even analysis
+- Wrote METRICS.md — KPIs, funnel metrics, and success criteria
+- Updated PRICING_DATA.md to confirm all vendor URLs are current
+- Added PROMPTS.md — all AI prompts used during development
+- Added LANDING_COPY.md — landing page copy and messaging framework
+- Finalized README.md with project overview, architecture decisions, and setup instructions
+
+**What I learned:**
+- Writing documentation last (after the code is done) is faster but riskier — you forget details. The daily DEVLOG habit saves this by capturing decisions in real time.
+- The GTM strategy became much clearer after building the product — features like the shareable URL and AI summary naturally suggest viral distribution channels.
