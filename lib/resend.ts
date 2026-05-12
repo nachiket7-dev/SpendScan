@@ -6,19 +6,18 @@ import { formatCurrency } from "./utils";
 // Resend — transactional email on lead capture using Official SDK
 // ---------------------------------------------------------------------------
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://spendscan.credex.rocks";
 
-// Helper to get Resend instance only when needed to avoid build-time errors
+/**
+ * Get Resend instance only when needed to avoid build-time errors
+ * and ensure environment variables are loaded.
+ */
 function getResendInstance() {
-  if (!RESEND_API_KEY || RESEND_API_KEY.includes("your_resend")) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || apiKey.includes("your_resend") || apiKey === "") {
     return null;
   }
-  return new Resend(RESEND_API_KEY);
-}
-
-function isConfigured(): boolean {
-  return !!RESEND_API_KEY && !RESEND_API_KEY.includes("your_resend");
+  return new Resend(apiKey);
 }
 
 interface EmailOptions {
@@ -34,7 +33,7 @@ export async function sendAuditReportEmail(options: EmailOptions): Promise<boole
   const resend = getResendInstance();
   
   if (!resend) {
-    console.warn("Resend not configured — skipping transactional email");
+    console.warn("Resend not configured (API key missing) — skipping transactional email");
     return false;
   }
 
