@@ -3,6 +3,7 @@
 import { AuditResult, ToolRecommendation } from "@/lib/types";
 import { TOOL_COLORS, TOOL_ICONS } from "@/lib/tools";
 import { formatCurrency, RECOMMENDATION_LABELS } from "@/lib/utils";
+import Link from "next/link";
 
 interface SharedAuditViewProps {
   result: AuditResult;
@@ -35,7 +36,7 @@ export function SharedAuditView({ result }: SharedAuditViewProps) {
       <div style={{ maxWidth: 860, margin: "0 auto" }}>
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <a
+          <Link
             href="/"
             style={{
               fontFamily: "var(--font-display)",
@@ -47,7 +48,7 @@ export function SharedAuditView({ result }: SharedAuditViewProps) {
             }}
           >
             SpendScan
-          </a>
+          </Link>
           <div
             style={{
               fontSize: "0.75rem",
@@ -283,9 +284,9 @@ export function SharedAuditView({ result }: SharedAuditViewProps) {
           >
             Free, instant, no signup required. Takes under 60 seconds.
           </p>
-          <a href="/" className="btn-primary">
+          <Link href="/" className="btn-primary">
             Run my free audit →
-          </a>
+          </Link>
         </div>
       </div>
     </main>

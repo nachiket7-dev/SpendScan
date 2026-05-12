@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { getAuditSnapshot } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 import { SharedAuditView } from "./SharedAuditView";
+import Link from "next/link";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -85,9 +86,9 @@ export default async function AuditSharePage({ params }: PageProps) {
           >
             This audit link may have expired or doesn&apos;t exist yet.
           </p>
-          <a href="/" className="btn-primary">
+          <Link href="/" className="btn-primary">
             Run your own free audit →
-          </a>
+          </Link>
         </div>
       </main>
     );
