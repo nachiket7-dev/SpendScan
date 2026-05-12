@@ -112,13 +112,18 @@ export async function POST(request: NextRequest) {
 
     const shareUrl = `/audit/${auditId}`;
 
-    // Trigger transactional email
+    // Trigger transactional email (must await in serverless to prevent early exit)
     if (auditResult) {
-      sendAuditReportEmail({
-        to: email,
-        auditResult: auditResult as AuditResult,
-        shareUrl,
-      }).catch((err) => console.error("Email send failed:", err));
+      try {
+        const emailSent = await sendAuditReportEmail({
+          to: email,
+          auditResult: auditResult as AuditResult,
+          shareUrl,
+        });
+        console.log("Email send result:", emailSent);
+      } catch (err) {
+        console.error("Email send failed:", err);
+      }
     }
 
     return Response.json({
