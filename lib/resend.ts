@@ -126,7 +126,7 @@ ${toolBreakdown}
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "SpendScan <noreply@credex.rocks>",
+        from: "SpendScan <onboarding@resend.dev>",
         to: [to],
         subject,
         html: htmlBody,
