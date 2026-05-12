@@ -9,7 +9,13 @@ import { formatCurrency } from "./utils";
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://spendscan.credex.rocks";
 
-const resend = new Resend(RESEND_API_KEY);
+// Helper to get Resend instance only when needed to avoid build-time errors
+function getResendInstance() {
+  if (!RESEND_API_KEY || RESEND_API_KEY.includes("your_resend")) {
+    return null;
+  }
+  return new Resend(RESEND_API_KEY);
+}
 
 function isConfigured(): boolean {
   return !!RESEND_API_KEY && !RESEND_API_KEY.includes("your_resend");
@@ -25,7 +31,9 @@ interface EmailOptions {
  * Send a transactional audit report email via Resend.
  */
 export async function sendAuditReportEmail(options: EmailOptions): Promise<boolean> {
-  if (!isConfigured()) {
+  const resend = getResendInstance();
+  
+  if (!resend) {
     console.warn("Resend not configured — skipping transactional email");
     return false;
   }
