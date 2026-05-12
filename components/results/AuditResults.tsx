@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { AuditResult, ToolRecommendation } from "@/lib/types";
 import { TOOL_COLORS, TOOL_ICONS } from "@/lib/tools";
+import { LeadCaptureForm } from "./LeadCaptureForm";
 import { formatCurrency, RECOMMENDATION_LABELS } from "@/lib/utils";
 
 interface AuditResultsProps {
@@ -30,6 +32,49 @@ export function AuditResults({ result, onReset }: AuditResultsProps) {
     totalCurrentSpend > 0
       ? Math.round((totalMonthlySavings / totalCurrentSpend) * 100)
       : 0;
+
+  // AI Summary state
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [summarySource, setSummarySource] = useState<"ai" | "fallback" | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [summaryError, setSummaryError] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchSummary() {
+      setSummaryLoading(true);
+      setSummaryError(false);
+
+      try {
+        const res = await fetch("/api/summary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(result),
+        });
+
+        if (!res.ok) throw new Error("API error");
+
+        const data = await res.json();
+        if (!cancelled) {
+          setAiSummary(data.summary);
+          setSummarySource(data.source ?? "fallback");
+        }
+      } catch {
+        if (!cancelled) {
+          setSummaryError(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setSummaryLoading(false);
+        }
+      }
+    }
+
+    fetchSummary();
+    return () => { cancelled = true; };
+  }, [result]);
 
   return (
     <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 1rem" }}>
@@ -165,7 +210,7 @@ export function AuditResults({ result, onReset }: AuditResultsProps) {
           )}
         </div>
 
-        {/* Credex CTA for high savings */}
+        {/* Credex CTA for high savings (>$500/mo) */}
         {savingsCategory === "high" && (
           <div
             style={{
@@ -211,6 +256,78 @@ export function AuditResults({ result, onReset }: AuditResultsProps) {
           </div>
         )}
       </div>
+
+      {/* AI Summary */}
+      <AISummaryCard
+        summary={aiSummary}
+        source={summarySource}
+        loading={summaryLoading}
+        error={summaryError}
+      />
+
+      {/* Lead capture — shown after value is delivered */}
+      <LeadCaptureForm
+        auditResult={result}
+        onSuccess={(url) => setShareUrl(url)}
+      />
+
+      {/* Shareable URL */}
+      {shareUrl && (
+        <div
+          className="card"
+          style={{
+            padding: "1rem 1.25rem",
+            marginBottom: "1.5rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "0.75rem",
+            flexWrap: "wrap",
+            border: "1px solid var(--border-bright)",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: "0.7rem",
+                fontFamily: "var(--font-mono)",
+                color: "var(--text-dim)",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                marginBottom: 2,
+              }}
+            >
+              Shareable link
+            </div>
+            <div
+              style={{
+                fontSize: "0.85rem",
+                fontFamily: "var(--font-mono)",
+                color: "var(--green)",
+                wordBreak: "break-all",
+              }}
+            >
+              {typeof window !== "undefined"
+                ? `${window.location.origin}${shareUrl}`
+                : shareUrl}
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn-ghost"
+            style={{ flexShrink: 0, fontSize: "0.8rem", padding: "8px 16px" }}
+            onClick={() => {
+              const fullUrl =
+                typeof window !== "undefined"
+                  ? `${window.location.origin}${shareUrl}`
+                  : shareUrl;
+              navigator.clipboard.writeText(fullUrl);
+            }}
+          >
+            Copy link
+          </button>
+        </div>
+      )}
 
       {/* Per-tool breakdown */}
       <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "2rem" }}>
@@ -296,6 +413,101 @@ export function AuditResults({ result, onReset }: AuditResultsProps) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// AI Summary Card
+// ---------------------------------------------------------------------------
+function AISummaryCard({
+  summary,
+  source,
+  loading,
+  error,
+}: {
+  summary: string | null;
+  source: "ai" | "fallback" | null;
+  loading: boolean;
+  error: boolean;
+}) {
+  if (error && !summary) return null;
+
+  return (
+    <div
+      className="card"
+      style={{
+        padding: "1.5rem",
+        marginBottom: "1.5rem",
+        borderLeft: "3px solid var(--green)",
+        position: "relative",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: "0.75rem",
+        }}
+      >
+        <span
+          style={{
+            fontSize: "0.7rem",
+            fontFamily: "var(--font-mono)",
+            color: "var(--green)",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+          }}
+        >
+          {source === "ai" ? "✦ AI-Powered Summary" : "✦ Audit Summary"}
+        </span>
+        {source === "ai" && (
+          <span
+            style={{
+              fontSize: "0.6rem",
+              fontFamily: "var(--font-mono)",
+              color: "var(--text-dim)",
+              background: "var(--green-dim)",
+              padding: "2px 6px",
+              borderRadius: 4,
+            }}
+          >
+            Claude
+          </span>
+        )}
+      </div>
+
+      {loading ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div
+            className="shimmer"
+            style={{ height: 14, borderRadius: 4, width: "100%" }}
+          />
+          <div
+            className="shimmer"
+            style={{ height: 14, borderRadius: 4, width: "90%" }}
+          />
+          <div
+            className="shimmer"
+            style={{ height: 14, borderRadius: 4, width: "75%" }}
+          />
+        </div>
+      ) : (
+        <p
+          style={{
+            fontSize: "0.9rem",
+            lineHeight: 1.7,
+            color: "var(--text)",
+            margin: 0,
+          }}
+        >
+          {summary}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Per-tool Recommendation Card
+// ---------------------------------------------------------------------------
 function RecommendationCard({ rec }: { rec: ToolRecommendation }) {
   const color = TOOL_COLORS[rec.toolId];
   const icon = TOOL_ICONS[rec.toolId];
