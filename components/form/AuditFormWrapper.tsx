@@ -6,7 +6,7 @@ import { AuditResults } from "@/components/results/AuditResults";
 import { useAuditStore } from "@/lib/store";
 
 export function AuditFormWrapper() {
-  const { auditResult, setAuditResult, resetForm } = useAuditStore();
+  const { auditResult, setAuditResult } = useAuditStore();
   const [showResults, setShowResults] = useState(false);
 
   const handleFormSubmit = () => {

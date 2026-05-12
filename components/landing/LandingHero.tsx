@@ -76,7 +76,7 @@ export function LandingHero() {
           }}
         >
           Enter your AI subscriptions. Get an instant audit showing exactly
-          where you're overspending and how much you can save.
+          where you&apos;re overspending and how much you can save.
         </p>
 
         {/* CTA */}
