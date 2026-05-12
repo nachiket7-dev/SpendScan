@@ -6,26 +6,26 @@ import { AuditFormData } from "../lib/types";
 // Test 1: Cursor Business with small team → downgrade to Pro
 // ---------------------------------------------------------------------------
 describe("Cursor audit rules", () => {
-  it("recommends downgrading Cursor Business to Pro for teams ≤3 seats", () => {
+  it("recommends downgrading Cursor Business to Pro for teams <10 seats", () => {
     const formData: AuditFormData = {
       tools: [
         {
           toolId: "cursor",
           plan: "business",
-          monthlySpend: 120, // 3 seats × $40
-          seats: 3,
+          monthlySpend: 200, // 5 seats × $40
+          seats: 5,
           enabled: true,
         },
       ],
-      teamSize: 3,
+      teamSize: 5,
       useCase: "coding",
     };
-
+ 
     const result = runAudit(formData);
     const rec = result.recommendations[0];
-
+ 
     expect(rec.recommendationType).toBe("downgrade_plan");
-    expect(rec.estimatedMonthlySavings).toBe(60); // $120 - $60 (3×$20)
+    expect(rec.estimatedMonthlySavings).toBe(100); // $200 - $100 (5×$20)
     expect(rec.recommendedPlan).toBe("pro");
   });
 

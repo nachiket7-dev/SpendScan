@@ -22,10 +22,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
+    const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
     // If no API key, return fallback immediately
-    if (!apiKey || apiKey === "your_anthropic_api_key_here") {
+    if (!apiKey || apiKey === "your_groq_api_key_here") {
       const fallback = generateFallbackSummary(auditResult);
       return Response.json({ summary: fallback, source: "fallback" });
     }
@@ -33,27 +34,31 @@ export async function POST(request: NextRequest) {
     // Build the prompt
     const prompt = buildPrompt(auditResult);
 
-    // Call Anthropic API directly via fetch
+    // Call Groq API (OpenAI compatible) via fetch
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
+          "Authorization": `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 200,
+          model: model,
           messages: [
+            {
+              role: "system",
+              content: "You are a concise financial analyst specializing in SaaS cost optimization. You provide plain text summaries only.",
+            },
             {
               role: "user",
               content: prompt,
             },
           ],
+          max_tokens: 250,
+          temperature: 0.5,
         }),
         signal: controller.signal,
       });
@@ -62,7 +67,7 @@ export async function POST(request: NextRequest) {
 
       if (!response.ok) {
         console.error(
-          `Anthropic API error: ${response.status} ${response.statusText}`
+          `Groq API error: ${response.status} ${response.statusText}`
         );
         const fallback = generateFallbackSummary(auditResult);
         return Response.json({ summary: fallback, source: "fallback" });
@@ -70,15 +75,15 @@ export async function POST(request: NextRequest) {
 
       const data = await response.json();
       const summary =
-        data.content?.[0]?.text ?? generateFallbackSummary(auditResult);
+        data.choices?.[0]?.message?.content?.trim() ?? generateFallbackSummary(auditResult);
 
       return Response.json({
         summary,
-        source: data.content?.[0]?.text ? "ai" : "fallback",
+        source: data.choices?.[0]?.message?.content ? "ai" : "fallback",
       });
     } catch (fetchError) {
       clearTimeout(timeout);
-      console.error("Anthropic API fetch failed:", fetchError);
+      console.error("Groq API fetch failed:", fetchError);
       const fallback = generateFallbackSummary(auditResult);
       return Response.json({ summary: fallback, source: "fallback" });
     }

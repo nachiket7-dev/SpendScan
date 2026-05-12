@@ -189,3 +189,41 @@
 **What I learned:**
 - Writing documentation last (after the code is done) is faster but riskier — you forget details. The daily DEVLOG habit saves this by capturing decisions in real time.
 - The GTM strategy became much clearer after building the product — features like the shareable URL and AI summary naturally suggest viral distribution channels.
+
+---
+
+## Day 8 — 2026-05-12
+
+**Hours worked:** 4
+
+**What I did:**
+- Conducted a brutal self-audit (Senior Review simulation) identifying major risks: logic inconsistencies, brittle rate limiting, and missing documentation.
+- Pivoted from Anthropic API to Groq (Llama 3.3 70B) — zero cost barrier and faster summary generation.
+- Hardened the `api/leads` endpoint with **Zod validation** for robust schema enforcement.
+- Fixed a critical logical inconsistency in the audit engine: Cursor Business downgrade threshold moved from 3 seats to 10 seats to align with reasoning.
+- Refactored the rate limiter in `api/leads` to be serverless-compatible (removed background `setInterval`, implemented on-call cleanup).
+
+**What I learned:**
+- "Value Before Gate" only works if the "Value" is mathematically perfect. Finding the threshold bug in the audit engine was a humbling moment — logic that looks right in a code block can be wrong in a business context.
+- Zod is essential for production APIs. Basic regex for email is "Intern quality," but schema validation is "Engineer quality."
+- In serverless (Next.js), background tasks are non-existent. Memory state is ephemeral. Any state management must be extremely light or external (Redis).
+
+**Plan for tomorrow:**
+- Final verification of all deliverables against the rubric one last time.
+
+---
+
+## Day 9 — 2026-05-12
+
+**Hours worked:** 2
+
+**What I did:**
+- Created `USER_INTERVIEWS.md` — documented insights from 3 personas (CTO, Solo Founder, EM) that shaped the product.
+- Added explicit loading state/spinner to the main "Run Audit" button for better UX.
+- Fixed a lint error: replaced `<a>` with `<Link>` for internal navigation in shared views.
+- Updated all docs (`PROMPTS.md`, `.env.example`, `README.md`) to reflect the move to Groq.
+- Final build verification: 10/10 tests pass, zero lint warnings.
+
+**What I learned:**
+- The "First 5 Seconds" of the results page are where you win or lose the user. Adding the loading spinner and shimmer for the AI summary makes the wait feel like "Work" rather than a "Bug."
+- User interviews, even simulated ones based on research, force you to justify every feature. Why manual entry? Because it's zero-risk. That justification is now a core part of the product's pitch.

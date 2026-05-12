@@ -12,7 +12,7 @@ Built as a lead-generation asset for [Credex](https://credex.rocks).
 
 - **8 AI tools covered:** Cursor, GitHub Copilot, Claude, ChatGPT, Anthropic API, OpenAI API, Gemini, Windsurf
 - **Rule-based audit engine:** Deterministic, testable, finance-defensible — no black-box AI in the evaluation logic
-- **AI-powered summary:** Personalized 100-word summary via Anthropic API (with templated fallback)
+- **AI-powered summary:** Personalized 100-word summary via Groq API (Llama 3.3) with templated fallback
 - **Shareable URLs:** Unique public link per audit with OG/Twitter card meta tags
 - **Lead capture:** Email gate shown after value is delivered, with honeypot + rate limiting
 - **Transactional email:** Audit report emailed via Resend on lead capture
@@ -36,7 +36,8 @@ Open http://localhost:3000
 
 ```env
 # Required for AI summary (falls back to template if missing)
-ANTHROPIC_API_KEY=your_anthropic_api_key
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=llama-3.3-70b-versatile
 
 # Required for lead storage + shareable URLs
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
@@ -106,8 +107,8 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full system diagram, data flow,
 | `lib/fallback-summary.ts` | Templated summary fallback |
 | `lib/supabase.ts` | Supabase wrapper for leads + audit snapshots |
 | `lib/resend.ts` | Transactional email via Resend |
-| `app/api/summary/route.ts` | Anthropic API for AI summaries |
-| `app/api/leads/route.ts` | Lead capture with rate limiting + honeypot |
+| `app/api/summary/route.ts` | Groq API for AI summaries |
+| `app/api/leads/route.ts` | Lead capture with Zod + rate limiting |
 | `app/audit/[id]/page.tsx` | Shareable audit URL with OG tags |
 
 ---
@@ -126,7 +127,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full system diagram, data flow,
 
 6. **No Supabase SDK.** Lightweight fetch wrapper instead — avoids ~50KB bundle for 3 API calls. Would switch to SDK for production.
 
-7. **Fetch-based Anthropic API.** Direct fetch instead of `@anthropic-ai/sdk` — zero extra dependencies, simpler error handling, 10s timeout.
+7. **Fetch-based Groq API.** Direct fetch instead of SDKs — zero extra dependencies, simpler error handling, 10s timeout. OpenAI-compatible format makes switching models easy.
 
 ---
 
@@ -141,6 +142,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full system diagram, data flow,
 | [ECONOMICS.md](./ECONOMICS.md) | Unit economics and LTV analysis |
 | [METRICS.md](./METRICS.md) | KPIs and success criteria |
 | [PRICING_DATA.md](./PRICING_DATA.md) | Vendor pricing with source URLs |
+| [USER_INTERVIEWS.md](./USER_INTERVIEWS.md) | Discovery calls with 3 target personas |
 | [TESTS.md](./TESTS.md) | Test descriptions and coverage targets |
 | [PROMPTS.md](./PROMPTS.md) | AI prompts used in the project |
 | [LANDING_COPY.md](./LANDING_COPY.md) | Landing page copy and messaging |

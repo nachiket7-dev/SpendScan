@@ -2,7 +2,7 @@
 
 ## 1. AI Summary Generation (Production — `app/api/summary/route.ts`)
 
-This prompt runs in production via the Anthropic API to generate personalized audit summaries.
+This prompt runs in production via the Groq API (Llama 3.3 70B) to generate personalized audit summaries.
 
 ```
 You are a concise financial analyst specializing in SaaS cost optimization. Write a personalized 80-100 word summary for a {teamSize}-person {useCase} team based on their AI tool spend audit.

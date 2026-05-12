@@ -46,7 +46,7 @@ function evaluateTool(entry: ToolEntry, formData: AuditFormData): ToolRecommenda
   if (toolId === "cursor") {
     const proPricePerSeat = 20;
 
-    if (entry.plan === "business" && seats <= 3) {
+    if (entry.plan === "business" && seats < 10) {
       const downgradeSpend = seats * proPricePerSeat;
       const savings = monthlySpend - downgradeSpend;
       return rec(
